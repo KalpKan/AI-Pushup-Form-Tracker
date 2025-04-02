@@ -1,0 +1,80 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+
+# Load your CSV file containing the keypoints
+file_path = "C:/Users/Yash/Desktop/AI_Pushup_Tracking/outputs/pushup_keypoints_reduced.csv"
+data = pd.read_csv(file_path)
+
+# Clean column names to remove leading/trailing spaces
+data.columns = data.columns.str.strip()
+
+# Check the column names to ensure they match exactly
+print("Column names in the CSV:", data.columns)
+
+# Function to calculate the angle between three points (A, B, C)
+def calculate_angle(a, b, c):
+    a, b, c = np.array(a), np.array(b), np.array(c)
+    ab = a - b
+    bc = c - b
+    cosine_angle = np.dot(ab, bc) / (np.linalg.norm(ab) * np.linalg.norm(bc))
+    angle = np.arccos(np.clip(cosine_angle, -1.0, 1.0))  # To avoid numerical errors
+    return np.degrees(angle)
+
+# Function to extract angles from keypoints and prepare dataset
+def extract_angles(data):
+    angles = []
+    labels = []
+
+    for idx, row in data.iterrows():
+        # Extracting 3D coordinates for each relevant joint (x, y, z)
+        lw = [row['LEFT_WRIST_x'], row['LEFT_WRIST_y'], row['LEFT_WRIST_z']]
+        rw = [row['RIGHT_WRIST_x'], row['RIGHT_WRIST_y'], row['RIGHT_WRIST_z']]
+        le = [row['LEFT_ELBOW_x'], row['LEFT_ELBOW_y'], row['LEFT_ELBOW_z']]
+        re = [row['RIGHT_ELBOW_x'], row['RIGHT_ELBOW_y'], row['RIGHT_ELBOW_z']]
+        ls = [row['LEFT_SHOULDER_x'], row['LEFT_SHOULDER_y'], row['LEFT_SHOULDER_z']]
+        rs = [row['RIGHT_SHOULDER_x'], row['RIGHT_SHOULDER_y'], row['RIGHT_SHOULDER_z']]
+        lh = [row['LEFT_HIP_x'], row['LEFT_HIP_y'], row['LEFT_HIP_z']]
+        rh = [row['RIGHT_HIP_x'], row['RIGHT_HIP_y'], row['RIGHT_HIP_z']]
+        lk = [row['LEFT_KNEE_x'], row['LEFT_KNEE_y'], row['LEFT_KNEE_z']]
+        rk = [row['RIGHT_KNEE_x'], row['RIGHT_KNEE_y'], row['RIGHT_KNEE_z']]
+
+        # Calculate angles for left and right arm (shoulder-elbow-wrist) and other key body parts
+        left_shoulder_angle = calculate_angle(ls, le, lw)  # Angle at left shoulder
+        right_shoulder_angle = calculate_angle(rs, re, rw)  # Angle at right shoulder
+        left_elbow_angle = calculate_angle(ls, le, lw)  # Left elbow angle
+        right_elbow_angle = calculate_angle(rs, re, rw)  # Right elbow angle
+        left_knee_angle = calculate_angle(lh, lk, rh)  # Left knee angle
+        right_knee_angle = calculate_angle(rh, rk, lh)  # Right knee angle
+
+        # Use the label for good or bad form (this assumes a column 'label' exists)
+        label = row['label']  # Ensure 'label' column is correct, if it's different, adjust here
+
+        # Append the calculated angles and label
+        angles.append([left_shoulder_angle, right_shoulder_angle, left_elbow_angle, right_elbow_angle, left_knee_angle, right_knee_angle])
+        labels.append(label)
+
+    return np.array(angles), np.array(labels)
+
+# Extract angles and labels from the dataset
+angles, labels = extract_angles(data)
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(angles, labels, test_size=0.2, random_state=42)
+
+# Initialize and train a Random Forest Classifier
+clf = RandomForestClassifier(n_estimators=100, random_state=42)
+clf.fit(X_train, y_train)
+
+# Make predictions on the test set
+y_pred = clf.predict(X_test)
+
+# Calculate accuracy
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Model Accuracy: {accuracy * 100:.2f}%")
+
+# Optionally, save the trained model for later use
+import joblib
+joblib.dump(clf, 'pushup_form_classifier.pkl')
