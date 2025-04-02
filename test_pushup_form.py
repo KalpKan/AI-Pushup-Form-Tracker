@@ -4,7 +4,7 @@ import numpy as np
 import tensorflow as tf
 
 # Load the trained model
-model = tf.keras.models.load_model("/Users/kalp/Desktop/AI_Pushup_Tracking/model/pushup_model_augmented.h5")
+model = tf.keras.models.load_model("/Users/kalp/Desktop/AI_Pushup_Tracking/AI-Pushup-Form-Tracker/model/pushup_model_augmented.h5")
 
 # Initialize MediaPipe Pose model
 mp_pose = mp.solutions.pose
@@ -27,7 +27,7 @@ keypoints = [
 ]
 
 # Initialize video capture
-cap = cv2.VideoCapture("/Users/kalp/Desktop/AI_Pushup_Tracking/test_video/test_video3.mp4")
+cap = cv2.VideoCapture("/Users/kalp/Desktop/AI_Pushup_Tracking/AI-Pushup-Form-Tracker/test_video/test_video3.mp4")
 
 # Initialize variables to track pushups
 rep_count = 0
