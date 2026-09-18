@@ -1,0 +1,12 @@
+# Data, videos and the 64 MB RandomForest pickle are no longer tracked (they were 230 MB of history).
+# The web port at https://pushups.kalpkan.com only needs model/pushup_model_augmented.h5 (220 KB).
+outputs/
+test_video/
+data/
+*.pkl
+*.mp4
+*.MOV
+*.csv
+.DS_Store
+__pycache__/
+.venv/
